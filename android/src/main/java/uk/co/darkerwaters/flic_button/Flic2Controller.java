@@ -145,7 +145,7 @@ public class Flic2Controller {
         return false;
     }
 
-    private void storeButtonData(Flic2Button button) {
+    public void storeButtonData(Flic2Button button) {
         // store this data for later
         synchronized (buttonsDiscovered) {
             buttonsDiscovered.put(button.getUuid(), button);

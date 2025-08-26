@@ -170,10 +170,12 @@ class FlicButtonPlugin {
 
   static const String _methodNameGetButtons = "getButtons";
   static const String _methodNameGetButtonsByAddr = "getButtonsByAddr";
+  static const String _methodNameGetCustomButtonByAddr = "getCustomButtonByAddr";
 
   static const String _methodNameConnectButton = "connectButton";
   static const String _methodNameDisconnectButton = "disconnectButton";
   static const String _methodNameForgetButton = "forgetButton";
+  static const String _methodNameAddFlicData = "addFlicData";
 
   static const String ERROR_CRITICAL = 'CRITICAL';
   static const String ERROR_NOT_STARTED = 'NOT_STARTED';
@@ -249,6 +251,12 @@ class FlicButtonPlugin {
     return _channel.invokeMethod<bool>(_methodNameForgetButton, [buttonUuid]);
   }
 
+  /// add Flic button data to the discovered buttons map
+  Future<bool?> addFlicData(Flic2Button button) async {
+    // add the button data to the discovered buttons map
+    return _channel.invokeMethod<bool>(_methodNameAddFlicData, button);
+  }
+
   /// listen to the button (android only, or can commonly ignore)
   Future<bool?> listenToFlic2Button(String buttonUuid) async {
     // scan for flic 2 buttons then please
@@ -279,6 +287,18 @@ class FlicButtonPlugin {
     // scan for flic 2 buttons then please
     final buttonString = await _channel
         .invokeMethod<String?>(_methodNameGetButtonsByAddr, [buttonAddress]);
+    if (buttonString == null || buttonString.isEmpty) {
+      // not a valid button
+      return null;
+    } else {
+      return _createFlic2FromData(buttonString);
+    }
+  }
+
+  /// get a button by address and store it in the discovered buttons map
+  Future<Flic2Button?> getCustomButtonByAddress(String buttonAddress) async {
+    // get the button by address and store it
+    final buttonString = await _channel.invokeMethod<String?>(_methodNameGetCustomButtonByAddr, [buttonAddress]);
     if (buttonString == null || buttonString.isEmpty) {
       // not a valid button
       return null;

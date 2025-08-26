@@ -33,6 +33,7 @@ public class FlicButtonPlugin implements FlutterPlugin, MethodCallHandler {
 
   public static final String methodNameGetButtons = "getButtons";
   public static final String methodNameGetButtonsByAddr = "getButtonsByAddr";
+  public static final String methodNameGetCustomButtonByAddr = "getCustomButtonByAddr";
 
   public static final String methodNameConnectButton = "connectButton";
   public static final String methodNameDisconnectButton = "disconnectButton";
@@ -92,9 +93,11 @@ public class FlicButtonPlugin implements FlutterPlugin, MethodCallHandler {
       result.error(ERROR_INVALID_ARGUMENTS,
           "The list passed to " + functionName + " is not valid",
           arguments == null ? "null" : arguments.toString());
+      return null;
     } else if (null == this.flic2Controller) {
       // already started
       result.error(ERROR_NOT_STARTED, "Flic 2 hasn't been started", "Flic 2 isn't running so we can't " + functionName);
+      return null;
     } else {
       List<?> args = (List<?>) arguments;
       // and we can check the argument passed in is the button ID
@@ -103,6 +106,7 @@ public class FlicButtonPlugin implements FlutterPlugin, MethodCallHandler {
         result.error(ERROR_INVALID_ARGUMENTS,
             "The list passed to " + functionName + " should just contain the " + paramName,
             arguments.toString());
+        return null;
       } else {
         // it's a string
         toReturn = (String) args.get(0);
@@ -325,6 +329,27 @@ public class FlicButtonPlugin implements FlutterPlugin, MethodCallHandler {
         boolean answer = this.flic2Controller.forgetButton(buttonUuid);
         // and return from this as success
         result.success(answer);
+      }
+    } else if (call.method.equals(methodNameGetCustomButtonByAddr)) {
+      // get button by address and store it in discovered buttons
+      if (null == this.flic2Controller) {
+        result.error(ERROR_NOT_STARTED, "Flic 2 hasn't been started", "Flic 2 isn't running so we can't get button...");
+        return;
+      } else {
+        String buttonAddress = extractStringArgument(methodNameGetCustomButtonByAddr, "button address", call.arguments(), result);
+        if (buttonAddress != null) {
+          // Get the button from the manager using the address
+          Flic2Button button = this.flic2Controller.getButtonForAddress(buttonAddress);
+          if (button != null) {
+            // Store the button in discovered buttons map
+            this.flic2Controller.storeButtonData(button);
+            // Return the button data instead of just true
+            result.success(ButtonToJson(button));
+          } else {
+            result.error(ERROR_INVALID_ARGUMENTS, "Button not found with address: " + buttonAddress, null);
+          }
+        }
+        // Note: extractStringArgument already calls result.error() if buttonAddress is null, so no need to handle it here
       }
     } else {
       result.notImplemented();
